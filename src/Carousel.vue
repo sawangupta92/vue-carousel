@@ -39,6 +39,10 @@
       />
     </slot>
 
+    <slot name='image_pagination' v-if="!paginationEnabled">
+      <image-pagination @paginationclick="goToPage($event, 'pagination')" :images='images'></image-pagination>
+    </slot>
+
     <slot name="pagination" v-if="paginationEnabled">
       <pagination @paginationclick="goToPage($event, 'pagination')"/>
     </slot>
@@ -49,6 +53,7 @@ import autoplay from "./mixins/autoplay";
 import debounce from "./utils/debounce";
 import Navigation from "./Navigation.vue";
 import Pagination from "./Pagination.vue";
+import imagePagination from "./imagePagination.vue";
 import Slide from "./Slide.vue";
 
 const transitionStartNames = {
@@ -86,7 +91,8 @@ export default {
   components: {
     Navigation,
     Pagination,
-    Slide
+    Slide,
+    imagePagination
   },
   data() {
     return {
@@ -277,6 +283,10 @@ export default {
      * ex. [1199, 4] means if (window <= 1199) then show 4 slides per page
      */
     perPageCustom: {
+      type: Array
+    },
+
+    images: {
       type: Array
     },
     /**
