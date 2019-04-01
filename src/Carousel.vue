@@ -38,14 +38,26 @@
         @navigationclick="handleNavigation"
       />
     </slot>
-
-    <slot name='image_pagination' v-if="!paginationEnabled">
-      <image-pagination @paginationclick="goToPage($event, 'pagination')" :images='images'></image-pagination>
-    </slot>
-
-    <slot name="pagination" v-if="paginationEnabled">
-      <pagination @paginationclick="goToPage($event, 'pagination')"/>
-    </slot>
+    
+    <template v-if="imgPaginationEnabled">
+      <div :class="imgPaginationContainerClass">
+        <span :class="imgPaginationPrevClass" @click="currentPage - 1 >= 0 ? currentPage-- : null">{{imgPaginationPrevText}}</span>
+        <div :class="imgPaginationControlsContainerClass">
+          <span :class="[imgPaginationControlClass, thumb.pageNo == currentPage ? imgPaginationActiveClass : '']" v-for="(thumb,index) in slicedThumbs()" :key="index" @click="currentPage = thumb.pageNo">
+            <img :src="thumb.imgSrc" alt="No Image">
+          </span>
+        </div>
+        <span :class="imgPaginationNextClass" @click="currentPage + 1 < noOfImages ? currentPage++ : null">{{imgPaginationNextText}}</span>
+      </div>
+    </template>
+    <template v-else>
+      <slot name='image_pagination' v-if="!paginationEnabled">
+        <image-pagination @paginationclick="goToPage($event, 'pagination')" :images='images'></image-pagination>
+      </slot>
+      <slot name="pagination" v-if="paginationEnabled">
+        <pagination @paginationclick="goToPage($event, 'pagination')"/>
+      </slot>
+    </template>
   </section>
 </template>
 <script>
@@ -110,7 +122,9 @@ export default {
       slideCount: 0,
       transitionstart: "transitionstart",
       transitionend: "transitionend",
-      currentHeight: "auto"
+      currentHeight: "auto",
+      noOfImages:0,
+      imgThumbs:[]
     };
   },
   mixins: [autoplay],
@@ -339,7 +353,55 @@ export default {
      */
     value: {
       type: Number
+    },
+
+    // ----------------- Support for Image Pagination functionality ------------------------- //
+    imgPaginationEnabled:{
+      type: Boolean,
+      default:false
+    },
+    imgThumbnailsLimit:{
+      type:Number,
+      default:5
+    },
+    imgPaginationSrcProp:{
+      type:String,
+      default:'url'
+    },
+    imgPaginationContainerClass:{
+      type:String,
+      default:''
+    },
+    imgPaginationControlsContainerClass:{
+      type:String,
+      default:''
+    },
+    imgPaginationControlClass:{
+      type:String,
+      default:''
+    },
+    imgPaginationActiveClass:{
+      type:String,
+      default:'active-thumb'      
+    },
+    imgPaginationNextText:{
+      type: String, 
+      default:''
+    },
+    imgPaginationNextClass:{
+      type:String,
+      default:'icon-caret-right'
+    },
+    imgPaginationPrevText:{
+      type: String, 
+      default:''
+    },
+    imgPaginationPrevClass:{
+      type: String, 
+      default:'icon-caret-left'
     }
+    // -------------------------------------------------------------------------------------- //
+    
   },
   watch: {
     value(val) {
@@ -376,6 +438,9 @@ export default {
     currentPage(val) {
       this.$emit("pageChange", val);
       this.$emit("input", val);
+      if(this.imgPaginationEnabled){
+        this.goToPage(val);
+      }
     },
     autoplay(val) {
       if (val === false) {
@@ -868,6 +933,22 @@ export default {
     },
     handleTransitionEnd() {
       this.$emit("transitionEnd");
+    },
+    slicedThumbs(){
+      if (this.noOfImages <= this.imgThumbnailsLimit) {
+        return this.imgThumbs;
+      }
+      const start = this.currentPage + this.imgThumbnailsLimit <= this.noOfImages ? this.currentPage : this.noOfImages - this.imgThumbnailsLimit;
+      return this.imgThumbs.slice(start, this.currentPage + this.imgThumbnailsLimit); 
+    }
+  },
+  created(){
+    // Forms Thumbs Array On Init
+    if(this.imgPaginationEnabled){
+      this.imgThumbs = this.images.map((img, index) => {return { pageNo : index, imgSrc : img[this.imgPaginationSrcProp]}});
+      this.noOfImages = this.images.length;
+      console.log(this.imgThumbs);
+      console.log(this.noOfImages);
     }
   },
   mounted() {
