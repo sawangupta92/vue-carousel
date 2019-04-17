@@ -41,13 +41,13 @@
     
     <template v-if="imgPaginationEnabled">
       <div :class="imgPaginationContainerClass">
-        <span :class="imgPaginationPrevClass" @click="currentPage - 1 >= 0 ? currentPage-- : null">{{imgPaginationPrevText}}</span>
+        <span class="icon-caret-left" :class="imgPaginationPrevClass" v-if="showCarets" :disabled="currentPage <= 0" @click="currentPage - 1 >= 0 ? currentPage-- : null">{{imgPaginationPrevText}}</span>
         <div :class="imgPaginationControlsContainerClass">
           <span :class="[imgPaginationControlClass, thumb.pageNo == currentPage ? imgPaginationActiveClass : '']" v-for="(thumb,index) in slicedThumbs()" :key="index" @click="currentPage = thumb.pageNo">
             <img :src="thumb.imgSrc" alt="No Image">
           </span>
         </div>
-        <span :class="imgPaginationNextClass" @click="currentPage + 1 < noOfImages ? currentPage++ : null">{{imgPaginationNextText}}</span>
+        <span class="icon-caret-right" :class="imgPaginationNextClass" v-if="showCarets" :disabled="currentPage >= noOfImages - 1" @click="currentPage + 1 < noOfImages ? currentPage++ : null">{{imgPaginationNextText}}</span>
       </div>
     </template>
     <template v-else>
@@ -390,7 +390,7 @@ export default {
     },
     imgPaginationNextClass:{
       type:String,
-      default:'icon-caret-right'
+      default:''
     },
     imgPaginationPrevText:{
       type: String, 
@@ -398,7 +398,7 @@ export default {
     },
     imgPaginationPrevClass:{
       type: String, 
-      default:'icon-caret-left'
+      default:''
     }
     // -------------------------------------------------------------------------------------- //
     
@@ -570,6 +570,9 @@ export default {
     padding() {
       const padding = this.spacePadding;
       return padding > 0 ? padding : false;
+    },
+    showCarets(){
+      return this.noOfImages >= this.imgThumbnailsLimit;
     }
   },
   methods: {
@@ -947,8 +950,6 @@ export default {
     if(this.imgPaginationEnabled){
       this.imgThumbs = this.images.map((img, index) => {return { pageNo : index, imgSrc : img[this.imgPaginationSrcProp]}});
       this.noOfImages = this.images.length;
-      console.log(this.imgThumbs);
-      console.log(this.noOfImages);
     }
   },
   mounted() {
